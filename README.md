@@ -18,10 +18,13 @@
 
 ## 🚀 快速开始
 
-**作为 AI Agent Skill 安装：**
-如果你的智能体支持从 Github 直接安装技能（如 Claude Code, OpenClaw），只需让 Agent 读取本仓库的 `SKILL.md`。
+**一键安装 (作为 Agent Skill 注入)：**
+本套件完美兼容开放智能体技能生态，你可以在任何支持 `npx skills` 的终端直接安装：
+```bash
+npx skills add WebeyePR/gcp-kc-glossary-builder -g -y
+```
 
-**作为本地自动化工具链使用：**
+**作为本地自动化工具链独立使用：**
 ```bash
 git clone git@github.com:WebeyePR/gcp-kc-glossary-builder.git
 cd gcp-kc-glossary-builder

@@ -1,0 +1,26 @@
+{
+  "name": "gcp-kc-glossary-builder",
+  "version": "1.0.0",
+  "description": "GCP Knowledge Catalog Glossary Builder agent skill",
+  "main": "scripts/import_glossary.py",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WebeyePR/gcp-kc-glossary-builder.git"
+  },
+  "keywords": [
+    "agent-skill",
+    "gcp",
+    "dataplex",
+    "knowledge-catalog",
+    "business-glossary"
+  ],
+  "author": "WebeyePR",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/WebeyePR/gcp-kc-glossary-builder/issues"
+  },
+  "homepage": "https://github.com/WebeyePR/gcp-kc-glossary-builder#readme"
+}
