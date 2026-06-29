@@ -1,17 +1,13 @@
 import json
 import argparse
-import google.auth
-from google.auth.transport.requests import Request
+import os
+import sys
 import requests
 import uuid
 
-def get_token():
-    try:
-        credentials, project_id = google.auth.default()
-        credentials.refresh(Request())
-        return credentials.token, project_id
-    except google.auth.exceptions.DefaultCredentialsError:
-        raise Exception("\n[❌ 鉴权失败] 未找到有效的 Google Cloud 凭据。\n请执行 `gcloud auth application-default login` 进行本地身份认证。")
+# Import shared utilities
+sys.path.append(os.path.dirname(__file__))
+from gcp_utils import get_gcp_params
 
 def create_or_get_glossary(token, project_id, project_num, location, glossary_id):
     headers = {
@@ -115,17 +111,17 @@ def create_term(token, project_id, parent_resource, term_id, payload, base_gloss
 
 def import_glossary():
     parser = argparse.ArgumentParser(description="Dataplex 业务术语表导入脚本 (带目录分类)")
-    parser.add_argument("--project_id", type=str, required=True, help="GCP 项目 ID")
-    parser.add_argument("--project_num", type=str, required=True, help="GCP Project Number")
-    parser.add_argument("--location", type=str, default="us", help="Dataplex 资源位置 (Location)")
-    parser.add_argument("--glossary_id", type=str, required=True, help="术语表 ID")
+    parser.add_argument("--project_id", type=str, required=False, help="GCP 项目 ID (默认: gcloud config 或 GLOSSARY_PROJECT_ID)")
+    parser.add_argument("--project_num", type=str, required=False, help="GCP Project Number (默认: 自动解析或 GLOSSARY_PROJECT_NUM)")
+    parser.add_argument("--location", type=str, default=None, help="Dataplex 资源位置 (Location) (默认: us 或 GLOSSARY_LOCATION)")
+    parser.add_argument("--glossary_id", type=str, required=False, help="术语表 ID (默认: business-glossary 或 GLOSSARY_ID)")
     parser.add_argument("--json_file", type=str, required=True, help="提取的 JSON 文件路径")
     args = parser.parse_args()
 
-    token, _ = get_token()
+    token, project_id, project_num, location, glossary_id = get_gcp_params(args)
     
-    print(f"检查并确保术语表 {args.glossary_id} 存在...")
-    create_or_get_glossary(token, args.project_id, args.project_num, args.location, args.glossary_id)
+    print(f"检查并确保术语表 {glossary_id} 存在 (Project: {project_id})...")
+    create_or_get_glossary(token, project_id, project_num, location, glossary_id)
 
     with open(args.json_file, 'r', encoding='utf-8') as f:
         terms_data = json.load(f)
@@ -140,7 +136,7 @@ def import_glossary():
     cat_resource_map = {}
     for cat_name, cat_desc in cat_map.items():
         res_name = create_or_get_category(
-            token, args.project_id, args.project_num, args.location, args.glossary_id, cat_name, cat_desc
+            token, project_id, project_num, location, glossary_id, cat_name, cat_desc
         )
         cat_resource_map[cat_name] = res_name
         print(f"  [Category] {cat_name} -> {res_name}")
@@ -150,7 +146,7 @@ def import_glossary():
     failed = 0
     skipped = 0
 
-    base_glossary_name = f"projects/{args.project_num}/locations/{args.location}/glossaries/{args.glossary_id}"
+    base_glossary_name = f"projects/{project_num}/locations/{location}/glossaries/{glossary_id}"
 
     for i, item in enumerate(terms_data):
         term_id = f"term-v3-{i+1:03d}"
@@ -187,7 +183,7 @@ def import_glossary():
 
             
         try:
-            status = create_term(token, args.project_id, parent_resource, term_id, payload, base_glossary_name)
+            status = create_term(token, project_id, parent_resource, term_id, payload, base_glossary_name)
             if status == "CREATED":
                 print(f"  [+] 导入成功: {display_name} (ID: {term_id}) in {item.get('category', 'root')}")
                 success += 1

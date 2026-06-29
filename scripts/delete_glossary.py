@@ -1,31 +1,29 @@
 import argparse
 import requests
-import google.auth
-from google.auth.transport.requests import Request
 import time
+import os
+import sys
+
+# Import shared utilities
+sys.path.append(os.path.dirname(__file__))
+from gcp_utils import get_gcp_params
 
 def main():
     parser = argparse.ArgumentParser(description="Delete a Dataplex Glossary and all its terms.")
-    parser.add_argument("--project_id", required=True, help="GCP Project ID")
-    parser.add_argument("--project_num", required=True, help="GCP Project Number")
-    parser.add_argument("--location", default="us", help="Dataplex Location")
-    parser.add_argument("--glossary_id", required=True, help="Glossary ID")
+    parser.add_argument("--project_id", required=False, help="GCP Project ID (默认: 自动获取)")
+    parser.add_argument("--project_num", required=False, help="GCP Project Number (默认: 自动解析)")
+    parser.add_argument("--location", default=None, help="Dataplex Location")
+    parser.add_argument("--glossary_id", required=False, help="Glossary ID")
     args = parser.parse_args()
 
-    try:
-        credentials, project_id_auth = google.auth.default()
-        credentials.refresh(Request())
-        token = credentials.token
-    except google.auth.exceptions.DefaultCredentialsError:
-        print("\n[❌ 鉴权失败] 未找到有效的 Google Cloud 凭据。\n请执行 `gcloud auth application-default login` 进行本地身份认证。")
-        return
+    token, project_id, project_num, location, glossary_id = get_gcp_params(args)
 
     headers = {
         "Authorization": f"Bearer {token}",
-        "X-Goog-User-Project": args.project_id
+        "X-Goog-User-Project": project_id
     }
 
-    url_base = f"https://dataplex.googleapis.com/v1/projects/{args.project_num}/locations/{args.location}/glossaries/{args.glossary_id}"
+    url_base = f"https://dataplex.googleapis.com/v1/projects/{project_num}/locations/{location}/glossaries/{glossary_id}"
     
     print(f"Targeting glossary: {url_base}")
     # We must loop because terms are paginated

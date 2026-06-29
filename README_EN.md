@@ -78,8 +78,21 @@ For more interaction examples, please refer to [examples/test-prompts.md](exampl
 ## 🛡️ Security Boundaries
 
 - **Won't overwrite manual definitions blindly**: Uses soft-merging during entity resolution; won't brutally overwrite existing high-quality SQL formulas.
-- **Won't secretly read unauthorized GCP projects**: All underlying scripts require explicit `--project_id` and `--glossary_id` arguments, relying on your local ADC (Application Default Credentials).
+- **Won't secretly read unauthorized GCP projects**: All underlying scripts require explicit `--project_id` and `--glossary_id` arguments. If omitted, they will attempt to intelligently infer them from your local ADC (Application Default Credentials) and environment variables without blind guessing.
 - **Interceptable before execution**: The Agent will print the refined JSON and explicitly ask *"Do you want to proceed with the import?"* before touching the production database.
+
+## ⚙️ Parameters and Dependencies
+
+When executing the underlying scripts, the following parameters support smart fallbacks and automatic resolution, saving you from typing complex commands:
+
+| Parameter | CLI Flag | Environment Variable | Default Inference Logic |
+|---|---|---|---|
+| Project ID | `--project_id` | `GLOSSARY_PROJECT_ID` | The current gcloud default project returned by `google.auth.default()` |
+| Project Number | `--project_num`| `GLOSSARY_PROJECT_NUM` | **Auto-resolved**: Query dynamically via Cloud Resource Manager API |
+| Location | `--location` | `GLOSSARY_LOCATION` | Defaults to `us` |
+| Glossary ID | `--glossary_id` | `GLOSSARY_ID` | Defaults to `business-glossary` |
+
+*If the current environment lacks `gcloud` authentication, the script will fail gracefully and prompt you to run `gcloud auth application-default login` or configure `GOOGLE_APPLICATION_CREDENTIALS`, rather than throwing a messy Python stack trace.*
 
 ## 📁 File Structure
 

@@ -78,8 +78,21 @@ pip install -r requirements.txt
 ## 🛡️ 安全边界
 
 - **不会乱覆盖已有的手动定义**：实体对齐阶段采用软合并，不会粗暴覆盖更高质量的 SQL 公式。
-- **不会私自读取非授权的 GCP 项目**：所有底层脚本需要你显式传入 `--project_id` 和 `--glossary_id`，并依赖你本地的 ADC (Application Default Credentials)。
+- **不会私自读取非授权的 GCP 项目**：所有底层脚本需要你显式传入 `--project_id` 和 `--glossary_id`，若不传则会尝试从你的本地 ADC (Application Default Credentials) 和环境变量自动推断，不瞎猜。
 - **操作前可拦截**：Agent 会先将提纯的 JSON 打印成面板或写在本地，明确询问你 *"是否继续执行导入?"*，不会背着你偷偷写生产库。
+
+## ⚙️ 参数与环境依赖
+
+执行底层脚本时，支持以下参数的智能回退与自动解析，无需每次都手敲复杂的命令行：
+
+| 参数 | 命令行标志 | 环境变量 | 默认推断逻辑 |
+|---|---|---|---|
+| Project ID | `--project_id` | `GLOSSARY_PROJECT_ID` | `google.auth.default()` 返回的当前 gcloud 默认项目 |
+| Project Number | `--project_num`| `GLOSSARY_PROJECT_NUM` | **自动解析**: 通过 Cloud Resource Manager API 实时查询 |
+| Location | `--location` | `GLOSSARY_LOCATION` | 默认 `us` |
+| Glossary ID | `--glossary_id` | `GLOSSARY_ID` | 默认 `business-glossary` |
+
+*如果当前环境缺少 `gcloud` 鉴权，脚本将优雅报错并提示您执行 `gcloud auth application-default login` 或配置 `GOOGLE_APPLICATION_CREDENTIALS`，不会抛出繁杂的 Python 堆栈。*
 
 ## 📁 文件结构
 
